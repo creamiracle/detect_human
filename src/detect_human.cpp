@@ -178,23 +178,48 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
     int bbox_c_y = y+height/2;
 
     float posz = depth_float_img.at<float>(bbox_c_y,bbox_c_x);
+    if(posz != posz)
+    {
+      posz = 0;
+    }
+    int counter = 1;
+
+    ROS_INFO("posez before is %f",posz);
     for(int i = -5 ; i < 6; i++)
     {
+      //make sure not a nan
       if(i != 0)
-        posz += depth_float_img.at<float>(bbox_c_y + i,bbox_c_x);
+      {
+        if(depth_float_img.at<float>(bbox_c_y + i,bbox_c_x) == depth_float_img.at<float>(bbox_c_y + i,bbox_c_x))
+        {
+          //ROS_INFO("adding %f",depth_float_img.at<float>(bbox_c_y + i,bbox_c_x));
+          posz += depth_float_img.at<float>(bbox_c_y + i,bbox_c_x);
+          counter++;
+        }
+      }
     }
     for(int j = -5 ; j < 6; j++)
     {
       if(j != 0)
-       posz += depth_float_img.at<float>(bbox_c_y,bbox_c_x + j);
+      {
+        if(depth_float_img.at<float>(bbox_c_y,bbox_c_x + j) == depth_float_img.at<float>(bbox_c_y,bbox_c_x + j))
+        {
+          //ROS_INFO("adding %f",depth_float_img.at<float>(bbox_c_y,bbox_c_x + j));
+          posz += depth_float_img.at<float>(bbox_c_y,bbox_c_x + j);
+          counter++;
+        }
+      }
     }  
     
-    posz = posz / 26;
+    posz = posz / counter;
+
+
+    //ROS_INFO("posez now is %f",posz);
 
     int image_center_y = depth_float_img.rows/2;
     int image_center_x = depth_float_img.cols/2;
 
-    int diffx = bbox_c_x-image_center_x;
+    int diffx = bbox_c_x - image_center_x;
     int diffy = bbox_c_y - image_center_y;
 
     float anglexrad = atan2(diffx,525.0);
@@ -206,8 +231,17 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
     if(posz != posz  || posx != posx || posy != posy)
     {
       ROS_WARN("NaN value observed");
+      //ROS_INFO("anglex is %f, angley is %f",anglexrad, angleyrad);
+      //ROS_INFO("posx is %f, posy is %f. posz is %f", posx, posy, posz);
       return;
     }
+
+    if(posz == 0)
+    {
+      ROS_WARN("all nan value return 0");
+      return;
+    }
+
     if(posz > 5.0)
       return;
 
@@ -218,7 +252,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
     
   //point in base_link
     tf::Vector3 point_bl = transform * point;
-    ROS_INFO("The distance of the person in base_link %f %f %f",point_bl[0],point_bl[1],point_bl[2]);
+    ROS_INFO("Position in base_link %f %f %f",point_bl[0],point_bl[1],point_bl[2]);
 
   //print time into 2 format secs+nsec date
   //ros::Time thistime = objectcloud.header.stamp;
