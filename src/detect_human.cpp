@@ -47,37 +47,37 @@ int human_counter = 0;
 
 Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cloud objectcloud, int image_cols,tf::Vector3 robotPosition,tf::StampedTransform transform, int human_counter)
 {
-	Cloud objectpc;
-	ROS_INFO("head name %s", objectcloud.header.frame_id.c_str());
-	ROS_INFO("start function");
-	for(int x = object.x; x < object.x + object.width; x++)
-	{
-		for(int y = object.y; y < object.y + object.height; y++)
-	    {
-	      PointType point = objectcloud.points[y*image_cols + x];
+  Cloud objectpc;
+  ROS_INFO("head name %s", objectcloud.header.frame_id.c_str());
+  ROS_INFO("start function");
+  for(int x = object.x; x < object.x + object.width; x++)
+  {
+    for(int y = object.y; y < object.y + object.height; y++)
+      {
+        PointType point = objectcloud.points[y*image_cols + x];
 
-	      if(pcl_isfinite(point.x))
-	      {
-	        Eigen::Vector4f pointxy;
-	        pointxy[0] = point.x;
-	        pointxy[1] = point.y;
-	        pointxy[2] = 0.0;
-	        pointxy[3] = 0.0;
+        if(pcl_isfinite(point.x))
+        {
+          Eigen::Vector4f pointxy;
+          pointxy[0] = point.x;
+          pointxy[1] = point.y;
+          pointxy[2] = 0.0;
+          pointxy[3] = 0.0;
 
-	        Eigen::Vector4f robotxy;
+          Eigen::Vector4f robotxy;
 
-	        robotxy[0] = robotPosition[0];
-	        robotxy[1] = robotPosition[1];
-	        robotxy[2] = 0.0;
-	        robotxy[3] = 0.0;
+          robotxy[0] = robotPosition[0];
+          robotxy[1] = robotPosition[1];
+          robotxy[2] = 0.0;
+          robotxy[3] = 0.0;
 
-	        double dist = pcl::distances::l2(pointxy,robotxy);
+          double dist = pcl::distances::l2(pointxy,robotxy);
 
-	        if(dist <= 4.0)
-	          objectpc.push_back(point);
-	      }
-	    }
-  	}
+          if(dist <= 4.0)
+            objectpc.push_back(point);
+        }
+      }
+    }
 
   std::stringstream ss;
   ss<<"human_cloud"<<human_counter<<".pcd";
@@ -93,7 +93,7 @@ Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cl
   
   tf::Vector3 point(centroid[0], centroid[1], centroid[2]); 
 
-  	
+    
   //point in base_link
   tf::Vector3 point_bl = transform * point;
   ROS_INFO("person in base_link %f %f %f",point_bl[0],point_bl[1],point_bl[2]);
@@ -134,12 +134,12 @@ Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cl
   std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/testposition.txt", std::ios_base::app);
   if(!outfile)
   {
-  	std::cout<<"error";
+    std::cout<<"error";
   }
   else
   {
-  	outfile << point_bl[0] << "," << point_bl[1] << "," << point_bl[2] << " " << secs << "," << nsecs << "," << thistimestr <<endl;
-  	outfile.close();
+    outfile << point_bl[0] << "," << point_bl[1] << "," << point_bl[2] << " " << secs << "," << nsecs << "," << thistimestr <<endl;
+    outfile.close();
   }
 
   return objectpc;
@@ -184,7 +184,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
     }
     int counter = 1;
 
-    ROS_INFO("posez before is %f",posz);
+    //ROS_INFO("posez before is %f",posz);
     for(int i = -5 ; i < 6; i++)
     {
       //make sure not a nan
@@ -288,7 +288,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
 
   //save in txt
     //std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/newposition.txt", std::ios_base::app);
-    std::ofstream outfile("/home/rossie1/catkin_ws/src/detect_human/result/newposition.txt", std::ios_base::app);
+    std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/testposition.txt", std::ios_base::app);
     if(!outfile)
     {
       std::cout<<"error";
@@ -303,7 +303,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
 
 void depthRpcCallback(const sensor_msgs::PointCloud2::ConstPtr& depthRpc)
 {
-	ROS_INFO("get the depth call back");
+  ROS_INFO("get the depth call back");
   pcl::fromROSMsg(*depthRpc, pcl_depth_reg_data);
 }
 
@@ -344,7 +344,7 @@ void depthImgCallBack(const sensor_msgs::Image::ConstPtr& msg)
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& image)
 {
-	ROS_INFO("get the image call back");
+  ROS_INFO("get the image call back");
   cv_bridge::CvImagePtr cv_ptr;
   try
   {
@@ -380,11 +380,11 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& image)
           pt2.y = srv.response.objects[i].y + srv.response.objects[i].height;
           cv::rectangle(cv_ptr->image, pt1, pt2, cv::Scalar(255,255,0), 2, 8, 0 );
           calculatePositionfromDepthImage(srv.response.objects[i].x,srv.response.objects[i].y,srv.response.objects[i].width,srv.response.objects[i].height);
-        	//crop3DObjectFromPointCloud(srv.response.objects[i], pcl_depth_reg_data, cv_ptr->image.cols, robot_position, transform,human_counter);
-          //std::stringstream ss;
-          //ss<<"human_image"<<human_counter<<".jpg";
-          //cv::imwrite(ss.str().data(),cv_ptr->image);
-          //human_counter++;
+          //crop3DObjectFromPointCloud(srv.response.objects[i], pcl_depth_reg_data, cv_ptr->image.cols, robot_position, transform,human_counter);
+          std::stringstream ss;
+          ss<<"human_image"<<human_counter<<".jpg";
+          cv::imwrite(ss.str().data(),cv_ptr->image);
+          human_counter++;
         }
       }
     }
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
     
   while(ros::ok())
   {
-  	pose_pub.publish(poseMarker);
+    pose_pub.publish(poseMarker);
     ros::spinOnce();
     loop_rate.sleep();
 
