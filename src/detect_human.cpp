@@ -169,7 +169,7 @@ bool calculatePositionfromDepthImage(int x, int y, int width, int height)
     {
         //if there is an error during conversion, display it
         ROS_ERROR("tutorialROSOpenCV::main.cpp::cv_bridge exception: %s", e.what());
-        return;
+        return false;
     }
 
     cv::Mat depth_float_img = cv_ptr->image;
@@ -288,7 +288,7 @@ bool calculatePositionfromDepthImage(int x, int y, int width, int height)
 
   //save in txt
     //std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/newposition.txt", std::ios_base::app);
-    std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/resultbag2.txt", std::ios_base::app);
+    std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/result20131114.txt", std::ios_base::app);
     if(!outfile)
     {
       std::cout<<"error";
@@ -298,7 +298,7 @@ bool calculatePositionfromDepthImage(int x, int y, int width, int height)
       outfile << point_bl[0] << "," << point_bl[1] << "," << point_bl[2] << " " << secs << "," << nsecs << "," << thistimestr <<endl;
       outfile.close();
     }
-  return flag:
+  return flag;
 }
 
 
