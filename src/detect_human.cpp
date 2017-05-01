@@ -131,7 +131,7 @@ Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cl
   poseMarker.markers.push_back(aMarker);
 
   //save in txt
-  std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/testposition.txt", std::ios_base::app);
+  std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/resultbag2.txt", std::ios_base::app);
   if(!outfile)
   {
     std::cout<<"error";
@@ -154,9 +154,9 @@ void robotPoseCallback(const geometry_msgs::Pose::ConstPtr& pose)
   //ROS_INFO("The new robot position %f %f %f",point_bl[0],point_bl[1],point_bl[2]);
 }
 
-void calculatePositionfromDepthImage(int x, int y, int width, int height)
+bool calculatePositionfromDepthImage(int x, int y, int width, int height)
 {
-
+  bool flag = true;
   cv_bridge::CvImagePtr cv_ptr;
     //Convert from the ROS image message to a CvImage suitable for working with OpenCV for processing
     try
@@ -233,17 +233,17 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
       ROS_WARN("NaN value observed");
       //ROS_INFO("anglex is %f, angley is %f",anglexrad, angleyrad);
       //ROS_INFO("posx is %f, posy is %f. posz is %f", posx, posy, posz);
-      return;
+      return false;
     }
 
     if(posz == 0)
     {
       ROS_WARN("all nan value return 0");
-      return;
+      return false;
     }
 
     if(posz > 5.0)
-      return;
+      return false;
 
     ROS_INFO("Position of human %.2f %.2f %.2f",posx,posy,posz); 
 
@@ -288,7 +288,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
 
   //save in txt
     //std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/newposition.txt", std::ios_base::app);
-    std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/testposition.txt", std::ios_base::app);
+    std::ofstream outfile("/home/lin/catkin_ws/src/detect_human/result/resultbag2.txt", std::ios_base::app);
     if(!outfile)
     {
       std::cout<<"error";
@@ -298,6 +298,7 @@ void calculatePositionfromDepthImage(int x, int y, int width, int height)
       outfile << point_bl[0] << "," << point_bl[1] << "," << point_bl[2] << " " << secs << "," << nsecs << "," << thistimestr <<endl;
       outfile.close();
     }
+  return flag:
 }
 
 
@@ -326,6 +327,7 @@ void depthImgCallBack(const sensor_msgs::Image::ConstPtr& msg)
         //Always copy, returning a mutable CvImage
         //OpenCV expects color images to use BGR channel order.
         cv_ptr = cv_bridge::toCvCopy(depth_image);
+        cv_ptr->encoding = "bgr8";
     }
     catch (cv_bridge::Exception& e)
     {
@@ -371,7 +373,9 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& image)
       ROS_INFO("find a %s",srv.response.objects[i].label.c_str());
       if(srv.response.objects[i].label == "person")
       {
-        if(pcl_depth_reg_data.points.size() > 0){
+        if(pcl_depth_reg_data.points.size() > 0)
+        {
+          bool flag;
           cv::Point pt1;
           pt1.x = srv.response.objects[i].x;
           pt1.y = srv.response.objects[i].y;
@@ -379,12 +383,15 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& image)
           pt2.x = srv.response.objects[i].x + srv.response.objects[i].width ;
           pt2.y = srv.response.objects[i].y + srv.response.objects[i].height;
           cv::rectangle(cv_ptr->image, pt1, pt2, cv::Scalar(255,255,0), 2, 8, 0 );
-          calculatePositionfromDepthImage(srv.response.objects[i].x,srv.response.objects[i].y,srv.response.objects[i].width,srv.response.objects[i].height);
+          flag = calculatePositionfromDepthImage(srv.response.objects[i].x,srv.response.objects[i].y,srv.response.objects[i].width,srv.response.objects[i].height);
           //crop3DObjectFromPointCloud(srv.response.objects[i], pcl_depth_reg_data, cv_ptr->image.cols, robot_position, transform,human_counter);
-          std::stringstream ss;
-          ss<<"human_image"<<human_counter<<".jpg";
-          cv::imwrite(ss.str().data(),cv_ptr->image);
-          human_counter++;
+          if(flag == true)
+          {
+            std::stringstream ss;
+            ss<<"human_image"<<human_counter<<".jpg";
+            cv::imwrite(ss.str().data(),cv_ptr->image);
+            human_counter++;
+          }
         }
       }
     }
